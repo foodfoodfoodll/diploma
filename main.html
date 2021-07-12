@@ -1,0 +1,462 @@
+<html>
+    <script type='text/javascript' src='https://code.jquery.com/jquery-3.5.1.js'></script>
+    <script type="text/javascript" src="jquery.js"></script>
+
+    <head>
+        <meta charset="utf-8">
+        <title>Чистое помещение</title>
+        <link rel="stylesheet" href="style.css">
+
+    <style>
+        body{
+            font-family: Helvetica;
+            font-size: 16pt;
+        }
+        input{
+            background-color:#c6e7fa;
+            border: none;
+            border-radius: 5px;
+            font-family: Helvetica;
+            font-size: 16pt;
+            text-align: right;
+            width: 50px;
+        }
+        .back{
+            position: absolute;
+            width: 100%;
+        }
+        .power{
+            position: absolute;
+            width: 100px;
+            height: 25px;
+            background-color:#c6e7fa;
+            border-radius: 5px;
+
+        }
+        .power input{
+            position: relative;
+            left: 20px;
+            width: 30px;
+            font-size: 14pt;
+
+        }
+        .ed{
+            position: relative;
+            display: inline;
+            padding-left: 15px;
+        }
+        .parameters {
+            position:absolute;
+            top: 530px;
+            left: 40px;
+        }
+        .parameters table {
+            margin: 0;
+            padding-left: 20px;
+            display: none;
+        }
+        .parameters .title {
+            font-size: 16pt;
+            cursor: pointer;
+        }
+        .parameters .title::before {
+            content: '☰ ';
+            color: rgb(0, 17, 173);
+        }
+
+        .parameters.open table {
+            display: block;
+        }
+    </style>
+    </head>
+    <body> <div class="main">
+        <div class="back"><img src="fon.jpg">  </div>
+        <canvas id="ventIn" style="position: absolute; top: 319px; left: 1400px"></canvas>
+        <canvas id="ventOut" style="position: absolute; top: 141px; left: 211px"></canvas>
+        <canvas id="par" style="position: absolute; top: 319px; left: 1270px"></canvas>
+        <canvas id="valve1" style="position: absolute; top: 148px; left: 123px"></canvas>
+        <canvas id="valve2" style="position: absolute; top: 325px; left: 123px"></canvas>
+
+        <div style="text-align: center; position: absolute; top:530px; left: 520px; width:650px">
+            <div id="message"></div>
+            <div id="alarm" style="font-weight: bold; font-size: 110%; color: red"></div>
+        </div>
+
+        <div class="power" style="top: 100px; left: 230px">
+            <div class="ed" id='ventOutRoom' style="left:15px"> 0 </div>
+            <div class="ed"> % </div>
+        </div>
+        <div class="power" style="top: 460px; left: 650px">
+            <div class="ed" id='refrigerator' style="left:15px"> </div>
+            <div class="ed"> % </div>
+        </div>
+        <div class="power" style="top: 460px; left: 850px">
+            <div class="ed" id='calorifier' style="left:15px"> </div>
+            <div class="ed"> % </div>
+        </div>
+        <div class="power" style="top: 460px; left: 1035px">
+            <div class="ed" id='airCooler' style="left:15px"> </div>
+            <div class="ed"> % </div>
+        </div>
+        <div class="power" style="top: 460px; left: 1200px">
+            <div class="ed" id='humidifier' style="left:15px"> </div>
+            <div class="ed"> % </div>
+        </div>
+        <div class="power" style="top: 460px; left: 1400px">
+            <div class="ed" id='ventInRoom' style="left:15px"> </div>
+            <div class="ed"> % </div>
+        </div>
+        <div style="position: absolute; left: 45%; font-size: 16pt">
+            ВРЕМЯ
+            <input type='text' id='currentTime' style="width:60px; text-align: center;" value="09:00">
+        </div>
+
+        <div id="parameters" class="parameters">
+            <span class="title">ПАРАМЕТРЫ</span>
+                <table style="border: none">
+                    <tr> <td> Требуемая температура </td> <td>
+                    <input type='text' id='adjastedTemp' class='textbox'> °C </td> </tr>
+                    <tr> <td> Требуемая влажность </td> <td>
+                    <input type='text' id='adjastedWet' class='textbox'> % </td> </tr>
+                    <tr> <td> Требуемый перепад дваления в помещении</td> <td>
+                    <input type='text' id='adjastedPressure' class='textbox'> Па </td> </tr>
+                    <tr> <td> Требуемый перепад дваления на фильтрах:  </td> <td></td> </tr>
+                    <tr><td><blockquote>грубой очистки</blockquote></td><td><input type='text' id='adjastedPressureFilter1' class='textbox'> Па</td></tr>
+                    <tr><td><blockquote>тонкой очистки</blockquote></td><td><input type='text' id='adjastedPressureFilter2' class='textbox'> Па</td></tr>
+                    <tr><td><blockquote>задерживающего</blockquote></td><td><input type='text' id='adjastedPressureFilter3' class='textbox'> Па</td></tr>
+                    <tr> <td> Поддержание температуры в нерабочее время</td> <td>
+                    <input type='checkbox' id='constTemp'>
+                    <tr> <td> Поддержание влажности в нерабочее время</td> <td>
+                    <input type='checkbox' id='constWet'>
+                    <tr> <td> Поддержание давления в нерабочее время</td> <td>
+                    <input type='checkbox' id='constPressure'>
+                    <tr><td><button onclick="offAll()" id="allWorking" class="btn" style="font-size: 12pt;"> Остановить работу вентиляционной системы </button></td> </tr>
+                </table>
+        </div>
+        <div style="position:absolute;top: 530px; left: 1200px;">
+            <table style="border: none">
+                <tr> <td> Температура в помещении </td> <td>
+                <input type='text' id='tempIn' class='textbox' value="20"> °C </td> </tr>
+                <tr> <td> Влажность в помещении </td ><td>
+                <input type='text' id='wet' class='textbox' value="40"> %</td> </tr>
+                <tr> <td> Перепад давления в помещении </td> <td>
+                <input type='text' id='dPressure' class='textbox' value="5"> </td> </tr>
+                <tr> <td> Перепад давления на фильтрах:  </td> <td></td> </tr>
+                <tr><td><blockquote>грубой очистки</blockquote></td><td><input type='text' id='dPressureFilter1' class='textbox' value="100"> Па</td></tr>
+                <tr><td><blockquote>тонкой очистки</blockquote></td><td><input type='text' id='dPressureFilter2' class='textbox' value="100"> Па</td></tr>
+                <tr><td><blockquote>задерживающего</blockquote></td><td><input type='text' id='dPressureFilter3' class='textbox' value="100"> Па</td></tr>
+                <tr> <td> Пожарная сигнализация </td> <td>
+                <input type='checkbox' id='fireAlarm'>
+            </table>
+
+        </div>
+    </div>
+        <button onclick="logOut()" class="btn" style="position:absolute; z-index: 1; right: 20px; top: 0px; font-size: 12pt;"> Выйти </button> <br>
+        <span id="name" style="position:absolute; z-index: 1; right: 120px; top: 18px; text-align: right;"> Администратор </span>
+        <script>
+
+            let menuElem = document.getElementById('parameters');
+            let titleElem = menuElem.querySelector('.title');
+            let allWorking = true;
+            titleElem.onclick = function() {
+                menuElem.classList.toggle('open');
+            };
+            class Sprite {
+                constructor(options) {
+                    this.ctx = options.ctx;
+                    this.image = options.image;
+                    this.frameIndex = 0;
+                    this.tickCount = 0;
+                    this.ticksPerFrame = options.ticksPerFrame || 0;
+                    this.numberOfFrames = options.numberOfFrames || 1;
+                    this.width = options.width;
+                    this.height = options.height;
+                    this.start();
+                }
+
+                update() {
+                    this.tickCount++;
+                    if (this.tickCount > this.ticksPerFrame) {
+                        this.tickCount = 0;
+                        if (this.frameIndex < this.numberOfFrames - 1) {
+                            this.frameIndex++;
+                        } else {
+                            this.frameIndex = 0;
+                        }
+                    }
+                }
+
+                render() {
+                this.ctx.clearRect(0, 0, this.width / this.numberOfFrames, this.height);
+                    this.ctx.drawImage(
+                        this.image,
+                        this.frameIndex * this.width / this.numberOfFrames,
+                        0,
+                        this.width / this.numberOfFrames,
+                        this.height,
+                        0,
+                        0,
+                        this.width / this.numberOfFrames,
+                        this.height
+                    )
+                }
+
+                start() {
+                    let loop = () => {
+                        this.update();
+                        this.render();
+
+                        window.requestAnimationFrame(loop);
+                    }
+
+                    window.requestAnimationFrame(loop);
+                }
+            }
+
+            let ventIn = document.getElementById('ventIn');
+            ventIn.width = 116;
+            ventIn.height = 115;
+            let ventOut = document.getElementById('ventOut');
+            ventOut.width = 121;
+            ventOut.height = 115;
+            let par = document.getElementById('par');
+            par.width = 150;
+            par.height = 100;
+            let valve1 = document.getElementById('valve1');
+            valve1.width = 54;
+            valve1.height = 100;
+            let valve2 = document.getElementById('valve2');
+            valve2.width = 54;
+            valve2.height = 100;
+
+            let ventInImage = new Image();
+            ventInImage.src = 'ventIn.png';
+            let ventOutImage = new Image();
+            ventOutImage.src = 'ventOut.png';
+            var noneImage = new Image();
+            noneImage.src = 'none.png';
+            let parImage = new Image();
+            parImage.src = 'par100.png';
+            let valImage = new Image();
+            valImage.src = 'valves.png';
+
+            let ventInSprite = new Sprite({
+            ctx: ventIn.getContext('2d'),
+            image: ventInImage,
+            width: 348,
+            height: 115,
+            numberOfFrames: 3,
+            ticksPerFrame: 4,
+            })
+            let ventOutSprite = new Sprite({
+            ctx: ventOut.getContext('2d'),
+            image: ventOutImage,
+            width: 363,
+            height: 115,
+            numberOfFrames: 3,
+            ticksPerFrame: 4,
+            })
+            let parSprite = new Sprite({
+            ctx: par.getContext('2d'),
+            image: parImage,
+            width: 7500,
+            height: 100,
+            numberOfFrames: 50,
+            ticksPerFrame: 2,
+            })
+            let valSprite1 = new Sprite({
+            ctx: valve1.getContext('2d'),
+            image: noneImage,
+            width: 54,
+            height: 100,
+            numberOfFrames: 1,
+            ticksPerFrame: 4,
+            })
+            let valSprite2 = new Sprite({
+            ctx: valve2.getContext('2d'),
+            image: noneImage,
+            width: 54,
+            height: 100,
+            numberOfFrames: 1,
+            ticksPerFrame: 4,
+            })
+            var timerId;
+            function show() {
+                $.ajax({
+                    url: "request.php",
+                    cache: false,
+                    data: {
+                        adjastedTemp : $("#adjastedTemp").val(),
+                        adjastedWet : $("#adjastedWet").val(),
+                        adjastedPressure : $("#adjastedPressure").val(),
+                        adjastedPressureFilter1 : $("#adjastedPressureFilter1").val(),
+                        adjastedPressureFilter2 : $("#adjastedPressureFilter2").val(),
+                        adjastedPressureFilter3 : $("#adjastedPressureFilter3").val(),
+
+                        constTemp : $("#constTemp").is(':checked'),
+                        constWet : $("#constWet").is(':checked'),
+                        constPressure : $("#constPressure").is(':checked'),
+
+                        tempIn : $("#tempIn").val(),
+                        wet : $("#wet").val(),
+                        dPressure : $("#dPressure").val(),
+                        dPressureFilter1 : $("#dPressureFilter1").val(),
+                        dPressureFilter2 : $("#dPressureFilter2").val(),
+                        dPressureFilter3 : $("#dPressureFilter3").val(),
+                        currentTime : $("#currentTime").val(),
+                        fireAlarm : $("#fireAlarm").is(':checked'),
+                        allWorking : allWorking
+                    },
+                    dataType: "json",
+                    success: function(data){
+                        console.log(data);
+                        $("#tempIn").val(data['tempIn']);
+                        $("#wet").val(data['wet']);
+                        $("#dPressure").val(data['dPressure']);
+                        $("#dPressureFilter1").val(data['dPressureFilter1']);
+                        $("#dPressureFilter2").val(data['dPressureFilter2']);
+                        $("#dPressureFilter3").val(data['dPressureFilter3']);
+                        $("#currentTime").val(data['currentTime']);
+                        $("#ventInRoom").html(`${data['ventInRoom']}`);
+                        $("#ventOutRoom").html(`${data['ventOutRoom']}`);
+                        $("#calorifier").html(`${data['calorifier']}`);
+                        $("#airCooler").html(`${data['airCooler']}`);
+                        $("#humidifier").html(`${data['humidifier']}`);
+                        $("#refrigerator").html(`${data['refrigerator']}`);
+                        $("#message").html(data['filterMessage']);
+                        $("#alarm").html(data['alarm']);
+                        if (data['ventOutRoom']=="0")
+                            ventOutSprite.image=noneImage;
+                        else ventOutSprite.image=ventOutImage;
+                        if (data['ventOutRoom']=="25")
+                            ventOutSprite.ticksPerFrame = 6;
+                        else if (data['ventOutRoom']=="50")
+                            ventOutSprite.ticksPerFrame = 4;
+                        else if (data['ventOutRoom']=="100")
+                            ventOutSprite.ticksPerFrame = 2;
+
+                        if (data['ventInRoom']=="0")
+                            ventInSprite.image=noneImage;
+                        else ventInSprite.image=ventInImage;
+                        if (data['ventInRoom']=="25")
+                            ventInSprite.ticksPerFrame = 6;
+                        else if (data['ventInRoom']=="50")
+                            ventInSprite.ticksPerFrame = 4;
+                        else if (data['ventInRoom']=="100")
+                            ventInSprite.ticksPerFrame = 2;
+
+                        if (data['humidifier']=="0")
+                            parSprite.image=noneImage;
+                        else parSprite.image=parImage;
+
+                        if(data['valves']=="Открыты"){
+                            valSprite1.image=noneImage;
+                            valSprite2.image=noneImage;
+                        }
+                        else{
+                            valSprite1.image=valImage;
+                            valSprite2.image=valImage;
+                        }
+                    }
+                });
+            }
+            function get_data() {
+                $.ajax({
+                    url: "get_data.php",
+                    cache: false,
+                    dataType: "json",
+                    success: function(data){
+                        $("#adjastedTemp").val(data['adjastedTemp']);
+                        $("#adjastedWet").val(data['adjastedWet']);
+                        $("#adjastedPressure").val(data['adjastedPressure']);
+                        $("#adjastedPressureFilter1").val(data['adjastedPressureFilter1']);
+                        $("#adjastedPressureFilter2").val(data['adjastedPressureFilter2']);
+                        $("#adjastedPressureFilter3").val(data['adjastedPressureFilter3']);
+                        $("#name").html(data['name']);
+                        if (data['constTemp'] == '1')
+                            $('#constTemp').attr('checked', true);
+                        else
+                            $('#constTemp').attr('checked', false);
+                        if (data['constWet'] == '1')
+                            $('#constWet').attr('checked', true);
+                        else
+                            $('#constWet').attr('checked', false);
+                        if (data['constPressure'] == '1')
+                            $('#constPressure').attr('checked', true);
+                        else
+                            $('#constPressure').attr('checked', false);
+                    }
+                });
+            }
+            function get_name() {
+                $.ajax({
+                    url: "get_name.php",
+                    cache: false,
+                    dataType: "json",
+                    success: function(data){
+                        console.log(data);
+                        $("#name").html(data['name']);
+                    }
+                });
+            }
+
+            $(document).ready(function(){
+                if ($("#adjastedTemp").val()=="" ||
+                    $("#adjastedWet").val()=="" ||
+                    $("#adjastedPressure").val()=="" ||
+                    $("#adjastedPressureFilter1").val()=="" ||
+                    $("#adjastedPressureFilter2").val()=="" ||
+                    $("#adjastedPressureFilter3").val()=="")
+                    get_data();
+                    get_name();
+                show();
+                timerId = setInterval('show()',1000);
+            });
+            function logOut() {
+                var httpRequest = new XMLHttpRequest();
+                httpRequest.onreadystatechange = () => (window.location.href = "login.html");
+                httpRequest.open("POST", "logout.php");
+                httpRequest.send();
+            }
+            function offAll(){
+                allWorking = !allWorking;
+                if (allWorking)
+                    $("#allWorking").html("Остановить работу вентиляционной системы");
+                else
+                $("#allWorking").html("Возобновить работу вентиляционной системы");
+
+            }
+
+            adjastedTemp.onfocus = function(){clearInterval(timerId);}
+            adjastedTemp.onblur = function(){timerId = setInterval('show()',1000);}
+            adjastedWet.onfocus = function(){clearInterval(timerId);}
+            adjastedWet.onblur = function(){timerId = setInterval('show()',1000);}
+            adjastedPressure.onfocus = function(){clearInterval(timerId);}
+            adjastedPressure.onblur = function(){timerId = setInterval('show()',1000);}
+            adjastedPressureFilter1.onfocus = function(){clearInterval(timerId);}
+            adjastedPressureFilter1.onblur = function(){timerId = setInterval('show()',1000);}
+            adjastedPressureFilter2.onfocus = function(){clearInterval(timerId);}
+            adjastedPressureFilter2.onblur = function(){timerId = setInterval('show()',1000);}
+            adjastedPressureFilter3.onfocus = function(){clearInterval(timerId);}
+            adjastedPressureFilter3.onblur = function(){timerId = setInterval('show()',1000);}
+
+            tempIn.onfocus = function(){clearInterval(timerId);}
+            tempIn.onblur = function(){timerId = setInterval('show()',1000);}
+            wet.onfocus = function(){clearInterval(timerId);}
+            wet.onblur = function(){timerId = setInterval('show()',1000);}
+            dPressure.onfocus = function(){clearInterval(timerId);}
+            dPressure.onblur = function(){timerId = setInterval('show()',1000);}
+            dPressureFilter1.onfocus = function(){clearInterval(timerId);}
+            dPressureFilter1.onblur = function(){timerId = setInterval('show()',1000);}
+            dPressureFilter2.onfocus = function(){clearInterval(timerId);}
+            dPressureFilter2.onblur = function(){timerId = setInterval('show()',1000);}
+            dPressureFilter3.onfocus = function(){clearInterval(timerId);}
+            dPressureFilter3.onblur = function(){timerId = setInterval('show()',1000);}
+
+            currentTime.onfocus = function(){clearInterval(timerId);}
+            currentTime.onblur = function(){timerId = setInterval('show()',1000);}
+
+
+        </script>
+    </body>
+</html>
